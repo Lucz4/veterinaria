@@ -41,6 +41,7 @@ public class formMascota extends JFrame {
     private JButton btnGuardar;
     private JButton btnEliminar;
     private JButton btnModificar;
+    private int mascotaSeleccionadaId = -1;
 
 // [USER_DECLS_START]
 //  DECLARA TUS VARIABLES AQUI (Ej: private int contador;)
@@ -97,11 +98,12 @@ public class formMascota extends JFrame {
         txtPESO.setFont(new Font("Tahoma", Font.PLAIN, 11));
         txtPESO.setBounds(70, 179, 120, 22);
         modeloTablamascota = new DefaultTableModel(
-            new String[]{"Nombre", "Edad", "Especie", "Raza", "Genero", "Peso", "Id.Dueño"}, 0
+            new String[]{"ID", "Nombre", "Edad", "Especie", "Raza", "Genero", "Peso", "Id.Dueño"}, 0
         ) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
         tablamascota = new JTable(modeloTablamascota);
+        tablamascota.removeColumn(tablamascota.getColumnModel().getColumn(0));
         tablamascota.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         tablamascota.getTableHeader().setReorderingAllowed(false);
         JScrollPane scroll_tablamascota = new JScrollPane(tablamascota);
@@ -128,6 +130,7 @@ public class formMascota extends JFrame {
         btnModificar = new JButton("Modificar");
         btnModificar.setFont(new Font("Tahoma", Font.PLAIN, 11));
         btnModificar.setBounds(27, 290, 150, 23);
+        btnModificar.setEnabled(false);
         getContentPane().add(label1);
         getContentPane().add(label2);
         getContentPane().add(label3);
@@ -153,33 +156,18 @@ public class formMascota extends JFrame {
         // [USER_ACTION_START:btnGuardar]
 btnGuardar.addActionListener(e -> {
     try {
-        int filaSeleccionada = tabladueño.getSelectedRow();
-        if (filaSeleccionada == -1) {
-            JOptionPane.showMessageDialog(this, "Selecciona un dueño antes de guardar la mascota.");
+        Mascota mascota = leerFormulario(0);
+        int id = gestion.guardar(mascota);
+        if (id == -1) {
+            mostrarError("No se pudo guardar la mascota.");
             return;
         }
-        int filaModelo = tabladueño.convertRowIndexToModel(filaSeleccionada);
-        int idDueno = Integer.parseInt(modeloTabladueño.getValueAt(filaModelo, 0).toString());
 
-        String Nombre = txtNOMBRE.getText();
-        String Genero = txtGENERO.getText();
-        int Edad = Integer.parseInt(txtEDAD.getText());
-        String Especie = txtESPECIE.getText();
-        String Raza = txtRAZA.getText();
-        double Peso = Double.parseDouble(txtPESO.getText());
-
-        Mascota mascota = new Mascota(0, Nombre, Edad, Especie, Raza, Genero, Peso, idDueno);
-        int id = gestion.guardar(mascota);
-
-        if (id != -1) {
-            JOptionPane.showMessageDialog(this, "Mascota guardada con ID: " + id);
-            limpiarFormulario();
-            actualizarTabla();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al guardar la mascota.");
-        }
-    } catch (Exception ex) {
-        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Mascota guardada con ID: " + id);
+        limpiarFormulario();
+        actualizarTabla();
+    } catch (IllegalArgumentException ex) {
+        mostrarError(ex.getMessage());
     }});
         // [USER_ACTION_END:btnGuardar]
 
@@ -193,9 +181,31 @@ btnEliminar.addActionListener(e -> {
 
         // [USER_ACTION_START:btnModificar]
 btnModificar.addActionListener(e -> {
-            // TODO: accion de btnModificar
+    if (mascotaSeleccionadaId == -1) {
+        mostrarError("Selecciona una mascota para modificar.");
+        return;
+    }
+
+    try {
+        Mascota mascota = leerFormulario(mascotaSeleccionadaId);
+        if (!gestion.actualizar(mascota)) {
+            mostrarError("No se pudo modificar la mascota.");
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this, "Mascota modificada.");
+        limpiarFormulario();
+        actualizarTabla();
+    } catch (IllegalArgumentException ex) {
+        mostrarError(ex.getMessage());
+    }
         });
 
+        tablamascota.getSelectionModel().addListSelectionListener(evento -> {
+            if (!evento.getValueIsAdjusting()) {
+                cargarMascotaSeleccionada();
+            }
+        });
 
         // [USER_ACTION_END:btnModificar]
 
@@ -211,12 +221,12 @@ btnModificar.addActionListener(e -> {
         
         for (Mascota mascota : listaMascota) {
             modeloTablamascota.addRow(new Object[] {
-
+                mascota.getId(),
                 mascota.getNombre(),
                 mascota.getEdad(),
                 mascota.getEspecie(),
-                mascota.getGenero(),
                 mascota.getRaza(),
+                mascota.getGenero(),
                 mascota.getPeso(),
                 mascota.getId_dueño(),
             });
@@ -243,7 +253,82 @@ btnModificar.addActionListener(e -> {
     };
 
     public void limpiarFormulario() {
-        // TODO: limpiar campos del formulario
+        mascotaSeleccionadaId = -1;
+        txtNOMBRE.setText("");
+        txtEDAD.setText("");
+        txtESPECIE.setText("");
+        txtRAZA.setText("");
+        txtGENERO.setText("");
+        txtPESO.setText("");
+        tablamascota.clearSelection();
+        tabladueño.clearSelection();
+        btnModificar.setEnabled(false);
+    }
+
+    private Mascota leerFormulario(int id) {
+        String nombre = txtNOMBRE.getText().trim();
+        String especie = txtESPECIE.getText().trim();
+        String raza = txtRAZA.getText().trim();
+        String genero = txtGENERO.getText().trim();
+        if (nombre.isEmpty() || especie.isEmpty() || raza.isEmpty() || genero.isEmpty()) {
+            throw new IllegalArgumentException("Completa nombre, especie, raza y género.");
+        }
+
+        int filaSeleccionada = tabladueño.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            throw new IllegalArgumentException("Selecciona un dueño antes de guardar la mascota.");
+        }
+        int filaModelo = tabladueño.convertRowIndexToModel(filaSeleccionada);
+        int idDueno = Integer.parseInt(modeloTabladueño.getValueAt(filaModelo, 0).toString());
+
+        try {
+            int edad = Integer.parseInt(txtEDAD.getText().trim());
+            double peso = Double.parseDouble(txtPESO.getText().trim());
+            if (edad < 0) {
+                throw new IllegalArgumentException("La edad no puede ser negativa.");
+            }
+            if (peso <= 0) {
+                throw new IllegalArgumentException("El peso debe ser mayor que cero.");
+            }
+            return new Mascota(id, nombre, edad, especie, raza, genero, peso, idDueno);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("La edad debe ser un entero y el peso un número válido.");
+        }
+    }
+
+    private void cargarMascotaSeleccionada() {
+        int filaSeleccionada = tablamascota.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            mascotaSeleccionadaId = -1;
+            btnModificar.setEnabled(false);
+            return;
+        }
+
+        int filaModelo = tablamascota.convertRowIndexToModel(filaSeleccionada);
+        mascotaSeleccionadaId = Integer.parseInt(modeloTablamascota.getValueAt(filaModelo, 0).toString());
+        txtNOMBRE.setText(modeloTablamascota.getValueAt(filaModelo, 1).toString());
+        txtEDAD.setText(modeloTablamascota.getValueAt(filaModelo, 2).toString());
+        txtESPECIE.setText(modeloTablamascota.getValueAt(filaModelo, 3).toString());
+        txtRAZA.setText(modeloTablamascota.getValueAt(filaModelo, 4).toString());
+        txtGENERO.setText(modeloTablamascota.getValueAt(filaModelo, 5).toString());
+        txtPESO.setText(modeloTablamascota.getValueAt(filaModelo, 6).toString());
+        seleccionarDueno(Integer.parseInt(modeloTablamascota.getValueAt(filaModelo, 7).toString()));
+        btnModificar.setEnabled(true);
+    }
+
+    private void seleccionarDueno(int idDueno) {
+        for (int fila = 0; fila < modeloTabladueño.getRowCount(); fila++) {
+            int id = Integer.parseInt(modeloTabladueño.getValueAt(fila, 0).toString());
+            if (id == idDueno) {
+                tabladueño.setRowSelectionInterval(fila, fila);
+                return;
+            }
+        }
+        tabladueño.clearSelection();
+    }
+
+    private void mostrarError(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, "Datos de mascota", JOptionPane.ERROR_MESSAGE);
     }
         
 // [USER_METHODS_END]

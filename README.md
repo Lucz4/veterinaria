@@ -5,12 +5,12 @@ Aplicación de escritorio para administrar información de una veterinaria. Est�
 ## Funcionalidades
 
 - Registrar y consultar dueños y sus datos de contacto.
-- Registrar mascotas y asociarlas con un dueño.
+- Registrar y modificar mascotas, y asociarlas con un dueño.
 - Administrar veterinarios.
 - Registrar consultas asociadas a una mascota y un veterinario.
 - Registrar vacunas asociadas a una mascota y una consulta.
 
-La interfaz principal permite abrir los formularios de cada módulo. Las pantallas de veterinarios, consultas y vacunas ofrecen operaciones para crear, listar, modificar y eliminar registros. Las operaciones disponibles para dueños y mascotas tienen las limitaciones indicadas más abajo.
+La interfaz principal permite abrir los formularios de cada módulo. Las pantallas de veterinarios, consultas y vacunas ofrecen operaciones para crear, listar, modificar y eliminar registros. Las operaciones disponibles para dueños tienen las limitaciones indicadas más abajo.
 
 ## Tecnologías y dependencias
 
@@ -90,6 +90,5 @@ La capa `dao` ejecuta las consultas SQL; las clases de gestión de `modelo` cone
 ## Limitaciones conocidas
 
 - No hay script SQL ni datos de ejemplo; el esquema debe prepararse por separado.
-- La modificación de mascotas todavía no está implementada en la interfaz.
 - La acción **Modificar** de dueños no actualiza el registro correctamente en la versión actual. Evita usarla hasta corregir el formulario y la operación de actualización del DAO.
 - Las contraseñas de veterinarios se guardan y se leen desde la base de datos como texto ordinario. No se debe usar esta implementación para almacenar credenciales reales sin añadir almacenamiento seguro de contraseñas.

@@ -11,14 +11,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 /**
- * DAO (Data Access Object) de la tabla "duenos".
- * Recibe objetos Dueno (del paquete modelo) y los guarda,
+ * DAO (Data Access Object) de la tabla "mascota".
+ * Recibe objetos Mascota (del paquete modelo) y los guarda,
  * actualiza, elimina o lee desde MySQL usando la clase Conexion.
  */
 public class MascotaDAO {
 
     /**
-     * Inserta un dueno nuevo.
+     * Inserta una mascota nueva.
      *
      * @return el id que asigno MySQL, o -1 si no se inserto nada.
      */
@@ -53,7 +53,7 @@ public class MascotaDAO {
     }
 
     /**
-     * Devuelve todos los duenos guardados, ordenados por nombre.
+     * Devuelve todas las mascotas guardadas, ordenadas por nombre.
      */
     public ArrayList<Mascota> listar() throws SQLException {
         String sql = "SELECT id, nombre, edad, especie, raza, genero, peso, id_dueño FROM mascota ORDER BY nombre";
@@ -79,30 +79,31 @@ public class MascotaDAO {
     }
 
     /**
-     * Actualiza los datos de un dueno ya existente (usando su id).
+     * Actualiza los datos de una mascota ya existente (usando su id).
      *
      * @return true si se actualizo algun registro.
      */
-    public boolean actualizar(Mascota Mascota) throws SQLException {
-        String sql = "UPDATE dueño SET nombre = ?, edad = ?, especie = ?, raza = ?, genero = ?, peso = ?, id_dueño = ? WHERE id = ?";
+    public boolean actualizar(Mascota mascota) throws SQLException {
+        String sql = "UPDATE mascota SET nombre = ?, edad = ?, especie = ?, raza = ?, genero = ?, peso = ?, id_dueño = ? WHERE id = ?";
 
         try (Connection cn = Conexion.getConexion();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, Mascota.getNombre());
-            ps.setInt(2, Mascota.getEdad());
-            ps.setString(3, Mascota.getEspecie());
-            ps.setString(4, Mascota.getRaza());
-            ps.setString(5, Mascota.getGenero());
-            ps.setDouble(6, Mascota.getPeso());
-            ps.setInt(7, Mascota.getId_dueño());
+            ps.setString(1, mascota.getNombre());
+            ps.setInt(2, mascota.getEdad());
+            ps.setString(3, mascota.getEspecie());
+            ps.setString(4, mascota.getRaza());
+            ps.setString(5, mascota.getGenero());
+            ps.setDouble(6, mascota.getPeso());
+            ps.setInt(7, mascota.getId_dueño());
+            ps.setInt(8, mascota.getId());
 
             return ps.executeUpdate() > 0;
         }
     }
 
     /**
-     * Elimina un dueno por su id.
+     * Elimina una mascota por su id.
      *
      * @return true si se elimino algun registro.
      */
